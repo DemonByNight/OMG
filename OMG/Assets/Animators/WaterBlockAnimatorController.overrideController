@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: WaterBlockAnimatorController
+  m_Controller: {fileID: 9100000, guid: 703e2b42542ca8e45b83a1e6f079e94f, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: a0600069407ca9346bdb27d3daec95a9, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: e9576592c8b0525469f0e5b5e2950a1c, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 020f63cb17765f74ebdbf1de763bf867, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 7536478955347b94185b5aebc44532a2, type: 2}

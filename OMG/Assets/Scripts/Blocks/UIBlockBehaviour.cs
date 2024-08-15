@@ -8,6 +8,8 @@ namespace OMG
         [SerializeField] private SpriteRenderer sr;
         [SerializeField] private UIBlockAnimatorStateHandler animationStateHandler;
 
+        public int Index;
+
         public void SetOrder(int order)
         {
             sr.sortingOrder = order;

@@ -7,6 +7,7 @@ namespace OMG
     public class LevelEntryPoint : MonoBehaviour
     {
         [SerializeField] private SceneContext sceneContext;
+        [SerializeField] private GameFieldRawImageBehavior gameFieldImageBehaviour;
 
         private void Awake()
         {
@@ -14,7 +15,8 @@ namespace OMG
 
             var levelsContainer = sceneContext.Container.Resolve<LevelContainerScriptableObject>();
             var gameFieldFactory = sceneContext.Container.Resolve<GameField.Factory>();
-            gameFieldFactory.Create(levelsContainer.GetAreaLevels("Junggle").FirstOrDefault());
+            var item = gameFieldFactory.Create(levelsContainer.GetAreaLevels("Junggle").FirstOrDefault());
+            gameFieldImageBehaviour.InjectGameField(item);
         }
     }
 }

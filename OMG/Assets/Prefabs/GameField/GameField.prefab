@@ -175,6 +175,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   renderCamera: {fileID: 7549383384190745376}
+  gameFieldIndexContainerPrefab: {fileID: 3068941115502442393, guid: 75908b632a99f59488a320fb89bccd71, type: 3}
 --- !u!1 &9022425423334234766
 GameObject:
   m_ObjectHideFlags: 0

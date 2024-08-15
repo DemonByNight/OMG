@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace OMG
@@ -35,6 +36,7 @@ namespace OMG
 
             result.Rows = rows.Length;
             result.Columns = result.Blocks.Count / result.Rows;
+            result.Blocks = result.Blocks.Split(result.Columns).Reverse().SelectMany(g => g).ToList();
 
             return result;
         }

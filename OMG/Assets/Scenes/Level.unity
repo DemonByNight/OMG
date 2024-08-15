@@ -256,7 +256,6 @@ MonoBehaviour:
   raycastCamera: {fileID: 1880191313}
   clickCatcherRectTransform: {fileID: 169567335}
   canvasGroup: {fileID: 880803778}
-  gameField: {fileID: 0}
 --- !u!1 &477829758
 GameObject:
   m_ObjectHideFlags: 0
@@ -616,7 +615,7 @@ CanvasGroup:
   m_Enabled: 1
   m_Alpha: 1
   m_Interactable: 1
-  m_BlocksRaycasts: 0
+  m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
 --- !u!1 &1078873730
 GameObject:
@@ -835,6 +834,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sceneContext: {fileID: 1078873731}
+  gameFieldImageBehaviour: {fileID: 169567338}
 --- !u!1 &1756297508
 GameObject:
   m_ObjectHideFlags: 0

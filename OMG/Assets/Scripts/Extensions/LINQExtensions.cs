@@ -13,5 +13,12 @@ namespace OMG
             .Select(n => items.Skip(n * numOfParts).Take(numOfParts).ToList())
                 .ToList();
         }
+
+        public static void Swap<T>(this IList<T> items, int i1, int i2)
+        {
+            T buf = items[i1];
+            items[i1] = items[i2];
+            items[i2] = buf;
+        }
     }
 }

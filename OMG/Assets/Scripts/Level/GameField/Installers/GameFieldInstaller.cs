@@ -18,6 +18,7 @@ namespace OMG
             FieldParseInfo levelParseInfo = _levelParser.Parse(_levelConfigScriptableObject);
             Container.BindInterfacesTo<GameFieldStateManager>().AsSingle().WithArguments(_levelConfigScriptableObject.Name, levelParseInfo);
             Container.BindInterfacesTo<GameUIArea>().FromInstance(gameUIArea).AsSingle();
+            Container.BindInterfacesTo<GameFieldCommandHandler>().AsSingle();
             Container.Bind<LevelConfigScriptableObject>().FromInstance(_levelConfigScriptableObject);
         }
     }

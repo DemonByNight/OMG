@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Zenject;
 
 namespace OMG
 {
@@ -8,17 +9,22 @@ namespace OMG
         [SerializeField] private Camera raycastCamera;
         [SerializeField] private RectTransform clickCatcherRectTransform;
         [SerializeField] private CanvasGroup canvasGroup;
-        [SerializeField] private GameField gameField;
+        private GameField _gameField;
 
         private bool isPointerDownSuccess;
         private Vector2 _pointerDownViewportCache;
+
+        public void InjectGameField(GameField gameField)
+        {
+            _gameField = gameField;
+        }
 
         public void OnPointerDown(PointerEventData eventData)
         {
             isPointerDownSuccess = GetViewportClickInsideRect(clickCatcherRectTransform, eventData.position, raycastCamera, out _pointerDownViewportCache);
         }
 
-        public async void OnPointerUp(PointerEventData eventData)
+        public void OnPointerUp(PointerEventData eventData)
         {
             if (!isPointerDownSuccess)
                 return;
@@ -26,7 +32,7 @@ namespace OMG
             if (GetViewportClickInsideRect(clickCatcherRectTransform, eventData.position, raycastCamera, out var pointerUpViewportCache))
             {
                 canvasGroup.interactable = false;
-                //await gameField.HandleCommand(new MoveCommand(_pointerDownViewportCache, pointerUpViewportCache));
+                _gameField.GameFieldCommandHandler.Move(_pointerDownViewportCache, pointerUpViewportCache);
             }
 
             canvasGroup.interactable = true;

@@ -5,13 +5,21 @@ namespace OMG
 {
     public interface IGameField
     {
-        //UniTask Swipe(Vector2 viewportStart, Vector2 viewportEnd);
+        IGameFieldCommandHandler GameFieldCommandHandler { get; }
     }
 
     public class GameField : MonoBehaviour, IGameField
     {
         [SerializeField] private GameUIArea gameUIArea;
 
+        public IGameFieldCommandHandler GameFieldCommandHandler { get; private set; }
+
         public class Factory : PlaceholderFactory<LevelConfigScriptableObject, GameField> { }
+
+        [Inject]
+        private void Construct(IGameFieldCommandHandler gameFieldCommandHandler)
+        {
+            GameFieldCommandHandler = gameFieldCommandHandler;
+        }
     }
 }

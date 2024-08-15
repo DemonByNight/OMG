@@ -14,6 +14,11 @@ namespace OMG
         public string LevelKey;
         public FieldParseInfo GameAreaState;
 
+        public FieldSaveData()
+        {
+
+        }
+
         public FieldSaveData(string levelKey, FieldParseInfo gameAreaState)
         {
             LevelKey = levelKey;
@@ -23,7 +28,6 @@ namespace OMG
 
     public class GameFieldStateManager : IGameFieldStateManager
     {
-        
         public const string SaveKey = "FieldSaveData";
 
         private string _levelKey;
@@ -33,11 +37,21 @@ namespace OMG
         public GameFieldStateManager(string levelKey, FieldParseInfo fieldParseInfo, ISaveService saveService)
         {
             _levelKey = levelKey;
-            _fieldParseInfo = fieldParseInfo;
             _saveService = saveService;
+
+            var checkSave = _saveService.Get<FieldSaveData>(SaveKey, new());
+            if (checkSave.LevelKey.Equals(levelKey))
+            {
+                _fieldParseInfo = checkSave.GameAreaState;
+            }
+            else
+            {
+                _fieldParseInfo = fieldParseInfo;
+                Save(_fieldParseInfo);
+            }
         }
 
-        public FieldParseInfo GetFieldInfo() 
+        public FieldParseInfo GetFieldInfo()
         {
             return _fieldParseInfo.GetCopy();
         }

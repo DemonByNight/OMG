@@ -1,9 +1,11 @@
 using System;
+using Zenject;
 
 namespace OMG
 {
     public interface IGameFieldStateManager
     {
+        void ResetField();
         FieldParseInfo GetFieldInfo();
         void Save(FieldParseInfo info);
     }
@@ -30,25 +32,35 @@ namespace OMG
     {
         public const string SaveKey = "FieldSaveData";
 
-        private string _levelKey;
-        private FieldParseInfo _fieldParseInfo;
-        private ISaveService _saveService;
+        private readonly LevelConfigScriptableObject _levelConfig;
+        private readonly ISaveService _saveService;
+        private readonly ILevelParser _levelParser;
 
-        public GameFieldStateManager(string levelKey, FieldParseInfo fieldParseInfo, ISaveService saveService)
+        private FieldParseInfo _fieldParseInfo;
+
+        public GameFieldStateManager(ILevelParser levelParser, 
+            LevelConfigScriptableObject levelConfig,
+            ISaveService saveService)
         {
-            _levelKey = levelKey;
+            _levelParser = levelParser;
+            _levelConfig = levelConfig;
             _saveService = saveService;
 
             var checkSave = _saveService.Get<FieldSaveData>(SaveKey, new());
-            if (checkSave.LevelKey.Equals(levelKey))
+            if (string.IsNullOrEmpty(checkSave.LevelKey) ||
+                !checkSave.LevelKey.Equals(_levelConfig.Name))
             {
-                _fieldParseInfo = checkSave.GameAreaState;
+                ResetField();
             }
             else
             {
-                _fieldParseInfo = fieldParseInfo;
-                Save(_fieldParseInfo);
+                _fieldParseInfo = checkSave.GameAreaState;
             }
+        }
+
+        public void ResetField()
+        {
+            Save(_levelParser.Parse(_levelConfig));
         }
 
         public FieldParseInfo GetFieldInfo()
@@ -59,7 +71,7 @@ namespace OMG
         public void Save(FieldParseInfo info)
         {
             _fieldParseInfo = info;
-            _saveService.Save(SaveKey, new FieldSaveData(_levelKey, info));
+            _saveService.Save(SaveKey, new FieldSaveData(_levelConfig.Name, info));
         }
     }
 }

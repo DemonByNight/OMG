@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7026141198bff4d809c8f26b56e916, type: 3}
+  m_Name: Level_2
+  m_EditorClassIdentifier: 
+  Name: Level 2
+  Decription: Even kid can beat it!
+  BlockInUse:
+  - Key: 0
+    BlockPrefab: {fileID: 2456175757850728061, guid: 4181630460513ef489cc8b83742eb816, type: 3}
+  - Key: 1
+    BlockPrefab: {fileID: 2456175757850728061, guid: d74417e5c1dd19643820a55b751d874e, type: 3}
+  LevelAsset: {fileID: 4900000, guid: e221b34d54b4a7e4d83fe4af80bd50f3, type: 3}

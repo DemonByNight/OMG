@@ -11,9 +11,8 @@ namespace OMG
         private void Awake()
         {
             Random.InitState(System.DateTime.Now.Millisecond);
-
             bootstrapSceneContext.Run();
-            SceneManager.LoadScene("Level", LoadSceneMode.Additive);
+            bootstrapSceneContext.Container.Resolve<ILevelLoader>().RestartLevel();
         }
     }
 }

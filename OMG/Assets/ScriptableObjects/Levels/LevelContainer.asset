@@ -16,3 +16,4 @@ MonoBehaviour:
   - AreaKey: Junggle
     Levels:
     - {fileID: 11400000, guid: 86b84adcedc7ba748ba2866d8fddcba4, type: 2}
+    - {fileID: 11400000, guid: 01e5fbc33a568ff49a062523c58f5ee7, type: 2}

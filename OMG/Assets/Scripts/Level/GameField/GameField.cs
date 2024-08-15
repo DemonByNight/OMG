@@ -12,14 +12,21 @@ namespace OMG
     {
         [SerializeField] private GameUIArea gameUIArea;
 
+        private IGameFieldStateManager _gameFieldStateManager;
         public IGameFieldCommandHandler GameFieldCommandHandler { get; private set; }
 
         public class Factory : PlaceholderFactory<LevelConfigScriptableObject, GameField> { }
 
         [Inject]
-        private void Construct(IGameFieldCommandHandler gameFieldCommandHandler)
+        private void Construct(IGameFieldCommandHandler gameFieldCommandHandler, IGameFieldStateManager gameFieldStateManager)
         {
             GameFieldCommandHandler = gameFieldCommandHandler;
+            _gameFieldStateManager = gameFieldStateManager;
+        }
+
+        public void ResetField()
+        {
+            _gameFieldStateManager.ResetField();
         }
     }
 }

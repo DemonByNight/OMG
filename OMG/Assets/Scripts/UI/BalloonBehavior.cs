@@ -31,7 +31,6 @@ namespace OMG
                 return;
 
             float speedMultiplier = _start.x > _end.x ? -1f : 1f;
-            Debug.Log(Mathf.Sin(DateTime.Now.Millisecond));
             transform.position += new Vector3(_speed * speedMultiplier * Time.deltaTime, Time.deltaTime * Mathf.Sin(transform.position.x * _freqency) * _magnitude, 0);
 
             if (Mathf.Abs(transform.position.x - _end.x) <= 0.1f)

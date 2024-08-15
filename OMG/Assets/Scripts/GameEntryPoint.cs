@@ -11,7 +11,7 @@ namespace OMG
         private void Awake()
         {
             bootstrapSceneContext.Run();
-            SceneManager.LoadScene("Game");
+            SceneManager.LoadScene("Level", LoadSceneMode.Additive);
         }
     }
 }

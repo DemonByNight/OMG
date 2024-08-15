@@ -7,5 +7,9 @@ AnimatorOverrideController:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: FireBlockAnimatorController
-  m_Controller: {fileID: 9100000, guid: 703e2b42542ca8e45b83a1e6f079e94f, type: 2}
-  m_Clips: []
+  m_Controller: {fileID: 9100000, guid: 4bd3bcf6207950e4b9191e24ade905d0, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: a0600069407ca9346bdb27d3daec95a9, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: a0600069407ca9346bdb27d3daec95a9, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: c0a8b9b215247f14a898b672b8c7956a, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: c0a8b9b215247f14a898b672b8c7956a, type: 2}

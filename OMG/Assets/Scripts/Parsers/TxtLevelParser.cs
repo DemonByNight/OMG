@@ -6,9 +6,9 @@ namespace OMG
 {
     public class TxtLevelParser : ILevelParser
     {
-        public LevelParseInfo Parse(LevelConfigScriptableObject levelConfig)
+        public FieldParseInfo Parse(LevelConfigScriptableObject levelConfig)
         {
-            LevelParseInfo result = new();
+            FieldParseInfo result = new();
 
             var rows = levelConfig.LevelAsset.text.Split(Environment.NewLine);
             List<string> valueCharacters = new();

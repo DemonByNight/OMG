@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 
 namespace OMG
 {
-    public class LevelParseInfo
+    [Serializable]
+    public class FieldParseInfo
     {
         public List<int> Blocks = new();
         public int Rows;
@@ -12,10 +14,19 @@ namespace OMG
         {
             get => Blocks[index];
         }
+
+        public FieldParseInfo GetCopy()
+        {
+            var copy = new FieldParseInfo();
+            copy.Blocks = new(Blocks);
+            copy.Rows = Rows;
+            copy.Columns = Columns;
+            return copy;
+        }
     }
 
     public interface ILevelParser
     {
-        LevelParseInfo Parse(LevelConfigScriptableObject levelConfig);
+        FieldParseInfo Parse(LevelConfigScriptableObject levelConfig);
     }
 }

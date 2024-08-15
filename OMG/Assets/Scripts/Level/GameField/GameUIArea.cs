@@ -1,24 +1,40 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Zenject;
 
 namespace OMG
 {
-    public class GameUIArea : MonoBehaviour
+    public interface IGameUIArea
+    {
+
+    }
+
+    public class GameUIArea : MonoBehaviour, IGameUIArea, IInitializable
     {
         [SerializeField] private Camera renderCamera;
 
-        private LevelParseInfo _levelParseInfo;
+        private LevelConfigScriptableObject _levelConfigScriptableObject;
+        private IGameFieldStateManager _gameFieldStateManager;
+
+        private FieldParseInfo _levelParseInfo;
         private List<BlockCell> _cells = new();
 
-        public void Setup(IReadOnlyList<Block> availableBlocks, LevelParseInfo levelParseInfo)
+        [Inject]
+        private void Construct(LevelConfigScriptableObject levelConfigScriptableObject, IGameFieldStateManager gameFieldStateManager)
         {
-            _levelParseInfo = levelParseInfo;
+            _levelConfigScriptableObject = levelConfigScriptableObject;
+            _gameFieldStateManager = gameFieldStateManager;
+        }
+
+        public void Initialize()
+        {
+            _levelParseInfo = _gameFieldStateManager.GetFieldInfo();
 
             renderCamera.aspect = (float)renderCamera.targetTexture.width / renderCamera.targetTexture.height;
             renderCamera.orthographicSize = _levelParseInfo.Columns / renderCamera.aspect;
 
-            CalculateGrid(availableBlocks);
+            CalculateGrid(_levelConfigScriptableObject.BlockInUse);
         }
 
         private void CalculateGrid(IReadOnlyList<Block> availableBlocks)

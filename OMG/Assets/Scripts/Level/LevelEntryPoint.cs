@@ -7,14 +7,14 @@ namespace OMG
     public class LevelEntryPoint : MonoBehaviour
     {
         [SerializeField] private SceneContext sceneContext;
-        [SerializeField] private GameField gameField;
 
         private void Awake()
         {
             sceneContext.Run();
 
             var levelsContainer = sceneContext.Container.Resolve<LevelContainerScriptableObject>();
-            gameField.ConstructLevel(levelsContainer.GetAreaLevels("Junggle").FirstOrDefault());
+            var gameFieldFactory = sceneContext.Container.Resolve<GameField.Factory>();
+            gameFieldFactory.Create(levelsContainer.GetAreaLevels("Junggle").FirstOrDefault());
         }
     }
 }

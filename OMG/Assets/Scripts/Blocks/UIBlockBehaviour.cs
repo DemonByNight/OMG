@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace OMG
 {
-    public class UIBlock : MonoBehaviour
+    public class UIBlockBehaviour : MonoBehaviour
     {
         [SerializeField] private SpriteRenderer sr;
         [SerializeField] private UIBlockAnimatorStateHandler animationStateHandler;

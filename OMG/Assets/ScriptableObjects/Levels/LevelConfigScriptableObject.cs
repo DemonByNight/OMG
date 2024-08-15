@@ -17,6 +17,6 @@ namespace OMG
     public class Block
     {
         public int Key;
-        public UIBlock BlockPrefab; 
+        public UIBlockBehaviour BlockPrefab; 
     }
 }

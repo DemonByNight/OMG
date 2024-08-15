@@ -16,7 +16,7 @@ MonoBehaviour:
   Decription: Even kid can beat it!
   BlockInUse:
   - Key: 0
-    BlockPrefab: {fileID: 8442501869441772680, guid: 4181630460513ef489cc8b83742eb816, type: 3}
+    BlockPrefab: {fileID: 2456175757850728061, guid: 4181630460513ef489cc8b83742eb816, type: 3}
   - Key: 1
-    BlockPrefab: {fileID: 8442501869441772680, guid: d74417e5c1dd19643820a55b751d874e, type: 3}
+    BlockPrefab: {fileID: 2456175757850728061, guid: d74417e5c1dd19643820a55b751d874e, type: 3}
   LevelAsset: {fileID: 4900000, guid: 27f88df06a1064d4f97be3e5f9764090, type: 3}

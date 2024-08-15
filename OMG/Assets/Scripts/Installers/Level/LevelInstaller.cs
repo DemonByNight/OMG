@@ -6,7 +6,7 @@ namespace OMG
     {
         public override void InstallBindings()
         {
-            
+            Container.Bind<ILevelParser>().To<TxtLevelParser>().AsSingle();
         }
     }
 }

@@ -13,6 +13,7 @@ namespace OMG
         public int this[int index]
         {
             get => Blocks[index];
+            set => Blocks[index] = value;
         }
 
         public FieldParseInfo GetCopy()

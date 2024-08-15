@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Zenject;
 
 namespace OMG
@@ -11,6 +12,7 @@ namespace OMG
         int GetBlockIndexByViewport(Vector2 viewport);
 
         UniTask Move(int indexStart, int indexEnd);
+        UniTask Destroy(HashSet<int> indexesToDestroy);
     }
 
     public class GameUIArea : MonoBehaviour, IGameUIArea, IInitializable
@@ -50,8 +52,6 @@ namespace OMG
                 return availableBlocks[availableBlockIndex].BlockPrefab;
             }
 
-            int GetRowIndex(int index) => index * _levelParseInfo.Columns;
-
             float scale = (renderCamera.orthographicSize * 2 * renderCamera.aspect) / _levelParseInfo.Columns;
             Vector3 blockScale = new(scale, scale, 1);
 
@@ -71,19 +71,19 @@ namespace OMG
 
                     GameFieldIndexContainer indexContainer = Instantiate(gameFieldIndexContainerPrefab, spawnPoint, Quaternion.identity, transform);
                     indexContainer.transform.localScale = blockScale;
-                    indexContainer.Index = GetRowIndex(i) + j;
+                    indexContainer.Index = i.GetRowIndex(_levelParseInfo.Columns) + j;
                     _indexContainers.Add(indexContainer.Index, indexContainer);
 
-                    if (_levelParseInfo[GetRowIndex(i) + j] != -1)
+                    if (_levelParseInfo[i.GetRowIndex(_levelParseInfo.Columns) + j] != -1)
                     {
-                        UIBlockBehaviour prefab = GetUIBlock(_levelParseInfo.Blocks, GetRowIndex(i) + j, availableBlocks);
+                        UIBlockBehaviour prefab = GetUIBlock(_levelParseInfo.Blocks, i.GetRowIndex(_levelParseInfo.Columns) + j, availableBlocks);
                         UIBlockBehaviour uiBlock = Instantiate(prefab, spawnPoint, Quaternion.identity, transform);
                         uiBlock.transform.localScale = blockScale;
 
-                        uiBlock.Index = GetRowIndex(i) + j;
-                        uiBlock.SetOrder(GetRowIndex(i) + j);
+                        uiBlock.Index = i.GetRowIndex(_levelParseInfo.Columns) + j;
+                        uiBlock.SetOrder(i.GetRowIndex(_levelParseInfo.Columns) + j);
 
-                        _cells.Add(GetRowIndex(i) + j, uiBlock);
+                        _cells.Add(i.GetRowIndex(_levelParseInfo.Columns) + j, uiBlock);
                     }
                 }
             }
@@ -137,6 +137,25 @@ namespace OMG
 
             if (cell1Exist)
                 _cells[indexEnd] = buf;
+        }
+
+        public async UniTask Destroy(HashSet<int> indexesToDestroy)
+        {
+            List<UIBlockBehaviour> waitDestroy = new();
+
+            foreach (var index in indexesToDestroy) 
+            {
+                if(_cells.TryGetValue(index, out UIBlockBehaviour cell))
+                {
+                    waitDestroy.Add(cell);
+                }
+            }
+
+            await UniTask.WhenAll(waitDestroy.Select(g => g.PlayDestroyEffectAsync()));
+            waitDestroy.ForEach(g => Destroy(g.gameObject));
+
+            foreach (var index in indexesToDestroy)
+                _cells.Remove(index);
         }
     }
 }

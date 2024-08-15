@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace OMG
@@ -33,8 +34,7 @@ namespace OMG
 
             float z = renderCamera.farClipPlane - 1;
 
-            List<int> localBlock = new(_levelParseInfo.Blocks);
-            localBlock.Reverse();
+            List<int> localBlock = _levelParseInfo.Blocks.Split(_levelParseInfo.Columns).Reverse().SelectMany(g => g).ToList();
 
             for (int i = 0; i < _levelParseInfo.Rows; i++)
             {

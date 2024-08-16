@@ -30,7 +30,7 @@ namespace OMG
             _levelContainerScriptableObject = levelContainerScriptableObject;
             _gameFieldInstanceProvider = gameFieldInstanceProvider;
 
-            _passedLevels = _saveService.Get<int>(LevelsPassedSaveKey, 0);
+            _passedLevels = _saveService.GetInt(LevelsPassedSaveKey, 0);
             IReadOnlyList<LevelConfigScriptableObject> levels = GetCurrentLevels(_levelContainerScriptableObject);
             CurrentLevel = levels[_passedLevels % levels.Count];
         }
@@ -38,7 +38,7 @@ namespace OMG
         public async UniTask LoadNextLevel()
         {
             _passedLevels++;
-            _saveService.Save<int>(LevelsPassedSaveKey, _passedLevels);
+            _saveService.SaveInt(LevelsPassedSaveKey, _passedLevels);
 
             IReadOnlyList<LevelConfigScriptableObject> levels = GetCurrentLevels(_levelContainerScriptableObject);
             var nextLevel = levels[_passedLevels % levels.Count];

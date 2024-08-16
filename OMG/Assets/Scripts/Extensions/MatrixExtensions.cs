@@ -13,7 +13,7 @@ namespace OMG
                 for (int i = from; i <= to; i++)
                 {
                     if (resultSet.Contains(i))
-                        return;
+                        continue;
 
                     resultSet.Add(i);
                 }
@@ -66,8 +66,8 @@ namespace OMG
             {
                 for (int i = from; i <= to; i += columns)
                 {
-                    if (resultSet.Contains(i))
-                        return;
+                    if (resultSet.Contains(i)) 
+                        continue;
 
                     resultSet.Add(i);
                 }

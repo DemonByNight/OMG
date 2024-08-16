@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using Zenject;
 
@@ -12,7 +13,7 @@ namespace OMG
     {
         bool Initialized { get; }
 
-        void InitializeComponent();
+        UniTask InitializeComponent();
         void Clear();
     }
 
@@ -31,17 +32,17 @@ namespace OMG
             GameFieldCommandHandler = gameFieldCommandHandler;
             _gameFieldStateManager = gameFieldStateManager;
 
-            Initialize();
+            Initialize().Forget();
         }
 
-        public void Initialize()
+        public async UniTask Initialize()
         {
-            _gameFieldStateManager.InitializeComponent();
-            gameUIArea.InitializeComponent();
-            GameFieldCommandHandler.InitializeComponent();
+            await _gameFieldStateManager.InitializeComponent();
+            await gameUIArea.InitializeComponent();
+            await GameFieldCommandHandler.InitializeComponent();
         }
 
-        public void ResetField()
+        public async UniTask ResetField()
         {
             GameFieldCommandHandler.Clear();
             gameUIArea.Clear();
@@ -49,9 +50,9 @@ namespace OMG
 
             _gameFieldStateManager.ResetField();
 
-            _gameFieldStateManager.InitializeComponent();
-            gameUIArea.InitializeComponent();
-            GameFieldCommandHandler.InitializeComponent();
+            await _gameFieldStateManager.InitializeComponent();
+            await gameUIArea.InitializeComponent();
+            await GameFieldCommandHandler.InitializeComponent();
         }
     }
 }

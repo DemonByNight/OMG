@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using System;
 
 namespace OMG
@@ -48,7 +49,7 @@ namespace OMG
             _saveService = saveService;
         }
 
-        public void InitializeComponent()
+        public async UniTask InitializeComponent()
         {
             var checkSave = _saveService.Get<FieldSaveData>(SaveKey, new());
             if (string.IsNullOrEmpty(checkSave.LevelKey) ||

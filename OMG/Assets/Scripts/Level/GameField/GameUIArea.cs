@@ -36,7 +36,7 @@ namespace OMG
             _gameFieldStateManager = gameFieldStateManager;
         }
 
-        public void InitializeComponent()
+        public async UniTask InitializeComponent()
         {
             _levelParseInfo = _gameFieldStateManager.GetFieldInfo();
 
@@ -118,14 +118,14 @@ namespace OMG
             && _indexContainers.TryGetValue(indexEnd, out var container1))
             {
                 cell1.SetOrder(indexEnd);
-                move1 = cell1.transform.DOMove(container1.transform.position, 0.5f).SetEase(Ease.Linear).ToUniTask(cancellationToken: token);
+                move1 = cell1.transform.DOMove(container1.transform.position, 0.5f).ToUniTask(cancellationToken: token);
             }
 
             if (cell2Exist
                  && _indexContainers.TryGetValue(indexStart, out var container2))
             {
                 cell2.SetOrder(indexStart);
-                move2 = cell2.transform.DOMove(container2.transform.position, 0.5f).SetEase(Ease.Linear).ToUniTask(cancellationToken: token);
+                move2 = cell2.transform.DOMove(container2.transform.position, 0.5f).ToUniTask(cancellationToken: token);
             }
 
             var buf = _cells[indexStart];

@@ -41,11 +41,18 @@ namespace OMG
             _gameFieldStateManager = gameFieldStateManager;
         }
 
-        public void InitializeComponent()
+        public async UniTask InitializeComponent()
         {
             _cts = new();
 
-            Observable.EveryUpdate().Subscribe(_ =>
+            //start game normalize
+            int processedCount = 0;
+            do
+            {
+                processedCount = await NormalizeGameField();
+            } while (processedCount > 0);
+
+            Observable.EveryUpdate().Subscribe(async _ =>
             {
                 if (_isNormalizationInProcess)
                     return;
@@ -55,7 +62,11 @@ namespace OMG
                 if (_normalizationBlockedIndexes.Count > 0
                     || fieldInfo.Blocks.HasAnyFlyingIndex(fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes))
                 {
-                    NormalizeGameField().Forget();
+                    int processedCount = 0;
+                    do
+                    {
+                        processedCount = await NormalizeGameField();
+                    } while (processedCount > 0);
                 }
             }).AddTo(_disposables);
 
@@ -134,7 +145,7 @@ namespace OMG
             return result;
         }
 
-        private async UniTask NormalizeGameField()
+        private async UniTask<int> NormalizeGameField()
         {
             _isNormalizationInProcess = true;
 
@@ -164,17 +175,19 @@ namespace OMG
 
             _gameFieldStateManager.Set(adjacentIndexesHorizontal.Select(g => (g, -1)).ToArray());
 
-            waitList.Add(_gameUIArea.Destroy(adjacentIndexesHorizontal, _cts.Token));
+            if (adjacentIndexesHorizontal.Count > 0)
+                waitList.Add(_gameUIArea.Destroy(adjacentIndexesHorizontal, _cts.Token));
 
             await waitList;
 
             if (_cts.IsCancellationRequested)
-                return;
+                return waitList.Count;
 
             foreach (var index in localBlockedIndexes)
                 _normalizationBlockedIndexes.Remove(index);
 
             _isNormalizationInProcess = false;
+            return waitList.Count;
         }
 
         public void Dispose()

@@ -116,14 +116,14 @@ namespace OMG
             && _indexContainers.TryGetValue(indexEnd, out var container1))
             {
                 cell1.SetOrder(indexEnd);
-                move1 = cell1.transform.DOMove(container1.transform.position, 0.4f).ToUniTask();
+                move1 = cell1.transform.DOMove(container1.transform.position, 2f).ToUniTask();
             }
 
             if (cell2Exist
                  && _indexContainers.TryGetValue(indexStart, out var container2))
             {
                 cell2.SetOrder(indexStart);
-                move2 = cell2.transform.DOMove(container2.transform.position, 0.4f).ToUniTask();
+                move2 = cell2.transform.DOMove(container2.transform.position, 2f).ToUniTask();
             }
 
             await UniTask.WhenAll(move1, move2);

@@ -1,6 +1,10 @@
 using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using UniRx;
 using UnityEngine;
+using Zenject;
 
 namespace OMG
 {
@@ -9,7 +13,7 @@ namespace OMG
         UniTask Move(Vector2 viewportStart, Vector2 viewportEnd);
     }
 
-    public class GameFieldCommandHandler : IGameFieldCommandHandler
+    public class GameFieldCommandHandler : IGameFieldCommandHandler, IInitializable, IDisposable
     {
         private enum Direction
         {
@@ -23,8 +27,11 @@ namespace OMG
         private readonly IGameUIArea _gameUIArea;
         private readonly IGameFieldStateManager _gameFieldStateManager;
 
-        private HashSet<int> _indexesInProcess = new();
-        private bool _isNormalizationStarted = false;
+        private bool _isNormalizationInProcess = false;
+        private CompositeDisposable _disposables = new();
+
+        private HashSet<int> _uiBlockedIndexes = new();
+        private HashSet<int> _normalizationBlockedIndexes = new();
 
         public GameFieldCommandHandler(IGameUIArea gameUIArea, IGameFieldStateManager gameFieldStateManager)
         {
@@ -32,9 +39,25 @@ namespace OMG
             _gameFieldStateManager = gameFieldStateManager;
         }
 
-        private async UniTask Move(FieldParseInfo fieldInfo, int indexStart, int indexEnd)
+        public void Initialize()
         {
-            fieldInfo.Blocks.Swap(indexStart, indexEnd);
+            Observable.EveryLateUpdate().Subscribe(_ =>
+            {
+                if (_isNormalizationInProcess)
+                    return;
+
+                var fieldInfo = _gameFieldStateManager.GetFieldInfo();
+
+                if (_normalizationBlockedIndexes.Count > 0
+                    || fieldInfo.Blocks.HasAnyFlyingIndex(fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes))
+                {
+                    NormalizeGameField().Forget();
+                }
+            }).AddTo(_disposables);
+        }
+
+        private async UniTask Move(int indexStart, int indexEnd)
+        {
             await _gameUIArea.Move(indexStart, indexEnd);
         }
 
@@ -49,7 +72,8 @@ namespace OMG
             if (indexStart == indexEnd)
                 return;
 
-            if (_indexesInProcess.Contains(indexStart) || _indexesInProcess.Contains(indexEnd))
+            if (_uiBlockedIndexes.Contains(indexStart) || _uiBlockedIndexes.Contains(indexEnd)
+                || _normalizationBlockedIndexes.Contains(indexStart) || _normalizationBlockedIndexes.Contains(indexEnd))
                 return;
 
             FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldInfo();
@@ -65,17 +89,19 @@ namespace OMG
             if (dir == Direction.Top && fieldInfo.Blocks[indexEnd] == -1)
                 return;
 
-            _indexesInProcess.Add(indexStart);
-            _indexesInProcess.Add(indexEnd);
+            _uiBlockedIndexes.Add(indexStart);
+            _uiBlockedIndexes.Add(indexEnd);
 
-            await Move(fieldInfo, indexStart, indexEnd);
+            _gameFieldStateManager.Set(
+                (indexStart, fieldInfo[indexEnd]), 
+                (indexEnd, fieldInfo[indexStart]));
 
-            _indexesInProcess.Remove(indexStart);
-            _indexesInProcess.Remove(indexEnd);
+            await Move(indexStart, indexEnd);
 
-            _gameFieldStateManager.Save(fieldInfo);
-
-            NormalizeGameField().Forget();
+            _normalizationBlockedIndexes.Add(indexStart);
+            _normalizationBlockedIndexes.Add(indexEnd);
+            _uiBlockedIndexes.Remove(indexStart);
+            _uiBlockedIndexes.Remove(indexEnd);
         }
 
         private Direction CalculateDirection(FieldParseInfo fpi, int p1, int p2)
@@ -96,78 +122,49 @@ namespace OMG
 
         private async UniTask NormalizeGameField()
         {
-            if (_isNormalizationStarted)
-                return;
+            _isNormalizationInProcess = true;
 
-            await UniTask.WaitUntil(() => _indexesInProcess.Count == 0);
-
-            _isNormalizationStarted = true;
-
+            HashSet<int> localBlockedIndexes = new(_normalizationBlockedIndexes);
             FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldInfo();
+            List<UniTask> waitList = new();
 
             //fly
-            var flyingPairs = GetFlyingPairs(fieldInfo.Blocks, fieldInfo.Rows, fieldInfo.Columns);
-            List<UniTask> waitFly = new();
+            var flyingPairs = fieldInfo.Blocks.GetFlyingPairs(fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
+            
             foreach (var pair in flyingPairs)
             {
-                waitFly.Add(Move(fieldInfo, pair.Key, pair.Value));
-            }
+                var indexesToBlock = pair.Key.GetNumbersInBetween(pair.Value, fieldInfo.Columns);
+                localBlockedIndexes.AddRange(indexesToBlock);
+                _normalizationBlockedIndexes.AddRange(indexesToBlock);
 
-            await UniTask.WhenAll(waitFly);
+                _gameFieldStateManager.Set((pair.Key, -1),(pair.Value, fieldInfo[pair.Key]));
+
+                waitList.Add(Move(pair.Key, pair.Value));
+            }
 
             //adjacent
-            var adjacentIndexesHorizontal = fieldInfo.Blocks.GetAdjacentIndexesHorizontal(3, fieldInfo.Rows, fieldInfo.Columns);
-            var adjacentIndexesVertical = fieldInfo.Blocks.GetAdjacentIndexesVertical(3, fieldInfo.Rows, fieldInfo.Columns);
+            var adjacentIndexesHorizontal = fieldInfo.Blocks.GetAdjacentIndexesHorizontal(3, fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
+            var adjacentIndexesVertical = fieldInfo.Blocks.GetAdjacentIndexesVertical(3, fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
 
             adjacentIndexesHorizontal.UnionWith(adjacentIndexesVertical);
-            await _gameUIArea.Destroy(adjacentIndexesHorizontal);
+            localBlockedIndexes.AddRange(adjacentIndexesHorizontal);
+            _normalizationBlockedIndexes.AddRange(adjacentIndexesHorizontal);
 
-            foreach (var index in adjacentIndexesHorizontal)
-            {
-                fieldInfo[index] = -1;
-            }
+            _gameFieldStateManager.Set(adjacentIndexesHorizontal.Select(g => (g, -1)).ToArray());
 
-            _gameFieldStateManager.Save(fieldInfo);
-            _isNormalizationStarted = false;
+            waitList.Add(_gameUIArea.Destroy(adjacentIndexesHorizontal));
+
+            await waitList;
+
+            foreach (var index in localBlockedIndexes)
+                _normalizationBlockedIndexes.Remove(index);
+
+            _isNormalizationInProcess = false;
         }
 
-        private Dictionary<int, int> GetFlyingPairs(IReadOnlyList<int> matrix, int rows, int columns)
+        public void Dispose()
         {
-            //from -> to indexes
-            Dictionary<int, int> flyingPairs = new();
-
-            for (int i = 1; i < rows; i++)
-            {
-                for (int j = 0; j < columns; j++)
-                {
-                    if (matrix[i.GetRowIndex(columns) + j] == -1)
-                        continue;
-
-                    (int, int) pair = (-1, -1);
-
-                    int currentIndex = i.GetRowIndex(columns) + j;
-                    pair.Item1 = currentIndex;
-                    pair.Item2 = -1;
-
-                    for(int k = currentIndex - columns; k >= 0 && matrix[k] == -1; k -= columns)
-                    {
-                        if (flyingPairs.ContainsKey(k))
-                        {
-                            pair.Item2 = flyingPairs[k] + columns;
-                            break;
-                        }
-
-                        pair.Item2 = k;
-                    }
-
-                    if (pair.Item2 == -1)
-                        continue;
-
-                    flyingPairs.Add(pair.Item1, pair.Item2);
-                }
-            }
-
-            return flyingPairs;
+            _disposables.Dispose();
         }
     }
 }

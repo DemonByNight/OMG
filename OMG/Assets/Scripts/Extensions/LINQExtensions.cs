@@ -20,5 +20,16 @@ namespace OMG
             items[i1] = items[i2];
             items[i2] = buf;
         }
+
+        public static void AddRange<T>(this HashSet<T> items, IEnumerable<T> collection)
+        {
+            foreach (var item in collection)
+            {
+                if (items.Contains(item))
+                    continue;
+
+                items.Add(item);
+            }
+        }
     }
 }

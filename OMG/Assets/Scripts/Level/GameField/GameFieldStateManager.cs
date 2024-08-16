@@ -1,13 +1,15 @@
 using System;
-using Zenject;
+using System.Collections.Generic;
 
 namespace OMG
 {
     public interface IGameFieldStateManager
     {
         void ResetField();
+        //[Obsolete]
         FieldParseInfo GetFieldInfo();
-        void Save(FieldParseInfo info);
+        void Set(params (int,int)[] savePairs);
+        //void Save(FieldParseInfo info);
     }
 
     [Serializable]
@@ -60,18 +62,30 @@ namespace OMG
 
         public void ResetField()
         {
-            Save(_levelParser.Parse(_levelConfig));
+            _fieldParseInfo = _levelParser.Parse(_levelConfig);
+            Save(_fieldParseInfo);
         }
 
         public FieldParseInfo GetFieldInfo()
-        {
-            return _fieldParseInfo.GetCopy();
-        }
+            => _fieldParseInfo;
 
-        public void Save(FieldParseInfo info)
+        private void Save(FieldParseInfo info)
         {
-            _fieldParseInfo = info;
             _saveService.Save(SaveKey, new FieldSaveData(_levelConfig.Name, info));
+        }
+        
+        //(index, value)
+        public void Set(params (int, int)[] savePairs)
+        {
+            var consistentCopy = _fieldParseInfo.GetCopy();
+
+            foreach (var pair in savePairs)
+            {
+                consistentCopy[pair.Item1] = pair.Item2;
+            }
+
+            _fieldParseInfo = consistentCopy;
+            Save(_fieldParseInfo);
         }
     }
 }

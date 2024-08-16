@@ -8,6 +8,14 @@ namespace OMG
         IGameFieldCommandHandler GameFieldCommandHandler { get; }
     }
 
+    public interface IGameFieldComponent
+    {
+        bool Initialized { get; }
+
+        void InitializeComponent();
+        void Clear();
+    }
+
     public class GameField : MonoBehaviour, IGameField
     {
         [SerializeField] private GameUIArea gameUIArea;
@@ -22,11 +30,28 @@ namespace OMG
         {
             GameFieldCommandHandler = gameFieldCommandHandler;
             _gameFieldStateManager = gameFieldStateManager;
+
+            Initialize();
+        }
+
+        public void Initialize()
+        {
+            _gameFieldStateManager.InitializeComponent();
+            gameUIArea.InitializeComponent();
+            GameFieldCommandHandler.InitializeComponent();
         }
 
         public void ResetField()
         {
+            GameFieldCommandHandler.Clear();
+            gameUIArea.Clear();
+            _gameFieldStateManager.Clear();
+
             _gameFieldStateManager.ResetField();
+
+            _gameFieldStateManager.InitializeComponent();
+            gameUIArea.InitializeComponent();
+            GameFieldCommandHandler.InitializeComponent();
         }
     }
 }

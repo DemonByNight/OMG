@@ -11,12 +11,12 @@ namespace OMG
         {
             sceneContext.Run();
 
-            var levelsContainer = sceneContext.Container.Resolve<LevelContainerScriptableObject>();
             var gameFieldFactory = sceneContext.Container.Resolve<GameField.Factory>();
-            var levelLoader = sceneContext.Container.Resolve<ILevelLoader>();
+            var levelLoader = sceneContext.Container.Resolve<ILevelInfoContainer>();
             var gameFieldInstanceProvider = sceneContext.Container.Resolve<GameFieldInstanceProvider>();
 
             gameFieldInstanceProvider.Instance = gameFieldFactory.Create(levelLoader.CurrentLevel);
+            levelLoader.RestartLevel();
         }
     }
 }

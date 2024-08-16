@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 namespace OMG
@@ -15,9 +16,9 @@ namespace OMG
             sr.sortingOrder = order;
         }
 
-        public async UniTask PlayDestroyEffectAsync()
+        public async UniTask PlayDestroyEffectAsync(CancellationToken token)
         {
-            await animationStateHandler.SetDestroyAsync().Task;
+            await animationStateHandler.SetDestroyAsync().Task.AttachExternalCancellation(token);
         }
     }
 }

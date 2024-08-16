@@ -13,13 +13,13 @@ namespace OMG
         [SerializeField] private Button restartButton;
         [SerializeField] private Button nextLevelButton;
 
-        private ILevelLoader _levelLoader;
+        private ILevelInfoContainer _levelLoader;
         private GameFieldInstanceProvider _gameFieldInstanceProvider;
 
         private CompositeDisposable _disposables = new();
 
         [Inject]
-        private void Construct(ILevelLoader levelLoader, GameFieldInstanceProvider gameFieldInstanceProvider)
+        private void Construct(ILevelInfoContainer levelLoader, GameFieldInstanceProvider gameFieldInstanceProvider)
         {
             _levelLoader = levelLoader;
             _gameFieldInstanceProvider = gameFieldInstanceProvider;
@@ -33,8 +33,6 @@ namespace OMG
             {
                 if (_gameFieldInstanceProvider is { Instance: not null })
                     _gameFieldInstanceProvider.Instance.ResetField();
-
-                _levelLoader.RestartLevel();
             }).AddTo(_disposables);
 
             nextLevelButton.OnClickAsObservable().Subscribe(_ => 

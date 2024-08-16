@@ -2,18 +2,18 @@ using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UniRx;
 using UnityEngine;
-using Zenject;
 
 namespace OMG
 {
-    public interface IGameFieldCommandHandler
+    public interface IGameFieldCommandHandler : IGameFieldComponent
     {
         UniTask Move(Vector2 viewportStart, Vector2 viewportEnd);
     }
 
-    public class GameFieldCommandHandler : IGameFieldCommandHandler, IInitializable, IDisposable
+    public class GameFieldCommandHandler : IGameFieldCommandHandler, IDisposable
     {
         private enum Direction
         {
@@ -29,9 +29,11 @@ namespace OMG
 
         private bool _isNormalizationInProcess = false;
         private CompositeDisposable _disposables = new();
-
         private HashSet<int> _uiBlockedIndexes = new();
         private HashSet<int> _normalizationBlockedIndexes = new();
+        private CancellationTokenSource _cts;
+
+        public bool Initialized { get; private set; }
 
         public GameFieldCommandHandler(IGameUIArea gameUIArea, IGameFieldStateManager gameFieldStateManager)
         {
@@ -39,9 +41,11 @@ namespace OMG
             _gameFieldStateManager = gameFieldStateManager;
         }
 
-        public void Initialize()
+        public void InitializeComponent()
         {
-            Observable.EveryLateUpdate().Subscribe(_ =>
+            _cts = new();
+
+            Observable.EveryUpdate().Subscribe(_ =>
             {
                 if (_isNormalizationInProcess)
                     return;
@@ -54,15 +58,26 @@ namespace OMG
                     NormalizeGameField().Forget();
                 }
             }).AddTo(_disposables);
+
+            Initialized = true;
         }
 
-        private async UniTask Move(int indexStart, int indexEnd)
+        private async UniTask Move(int indexStart, int indexEnd, CancellationToken token)
         {
-            await _gameUIArea.Move(indexStart, indexEnd);
+            var fieldInfo = _gameFieldStateManager.GetFieldInfo();
+
+            _gameFieldStateManager.Set(
+                (indexStart, fieldInfo[indexEnd]),
+                (indexEnd, fieldInfo[indexStart]));
+
+            await _gameUIArea.Move(indexStart, indexEnd, token);
         }
 
         public async UniTask Move(Vector2 viewportStart, Vector2 viewportEnd)
         {
+            if (!Initialized)
+                return;
+
             int indexStart = _gameUIArea.GetBlockIndexByViewport(viewportStart);
             int indexEnd = _gameUIArea.GetBlockIndexByViewport(viewportEnd);
 
@@ -92,11 +107,10 @@ namespace OMG
             _uiBlockedIndexes.Add(indexStart);
             _uiBlockedIndexes.Add(indexEnd);
 
-            _gameFieldStateManager.Set(
-                (indexStart, fieldInfo[indexEnd]), 
-                (indexEnd, fieldInfo[indexStart]));
+            await Move(indexStart, indexEnd, _cts.Token);
 
-            await Move(indexStart, indexEnd);
+            if (_cts.IsCancellationRequested)
+                return;
 
             _normalizationBlockedIndexes.Add(indexStart);
             _normalizationBlockedIndexes.Add(indexEnd);
@@ -129,17 +143,15 @@ namespace OMG
             List<UniTask> waitList = new();
 
             //fly
-            var flyingPairs = fieldInfo.Blocks.GetFlyingPairs(fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
-            
+            var flyingPairs = fieldInfo.Blocks.GetFlyingPairs(fieldInfo.Rows, fieldInfo.Columns, localBlockedIndexes.Concat(_uiBlockedIndexes).ToList());
+
             foreach (var pair in flyingPairs)
             {
                 var indexesToBlock = pair.Key.GetNumbersInBetween(pair.Value, fieldInfo.Columns);
                 localBlockedIndexes.AddRange(indexesToBlock);
                 _normalizationBlockedIndexes.AddRange(indexesToBlock);
 
-                _gameFieldStateManager.Set((pair.Key, -1),(pair.Value, fieldInfo[pair.Key]));
-
-                waitList.Add(Move(pair.Key, pair.Value));
+                waitList.Add(Move(pair.Key, pair.Value, _cts.Token));
             }
 
             //adjacent
@@ -152,9 +164,12 @@ namespace OMG
 
             _gameFieldStateManager.Set(adjacentIndexesHorizontal.Select(g => (g, -1)).ToArray());
 
-            waitList.Add(_gameUIArea.Destroy(adjacentIndexesHorizontal));
+            waitList.Add(_gameUIArea.Destroy(adjacentIndexesHorizontal, _cts.Token));
 
             await waitList;
+
+            if (_cts.IsCancellationRequested)
+                return;
 
             foreach (var index in localBlockedIndexes)
                 _normalizationBlockedIndexes.Remove(index);
@@ -164,7 +179,16 @@ namespace OMG
 
         public void Dispose()
         {
-            _disposables.Dispose();
+            Clear();
+        }
+
+        public void Clear()
+        {
+            _cts.Cancel();
+            _uiBlockedIndexes.Clear();
+            _normalizationBlockedIndexes.Clear();
+            _disposables?.Clear();
+            Initialized = false;
         }
     }
 }

@@ -1,33 +1,34 @@
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
-using UnityEngine.SceneManagement;
-using Zenject;
 
 namespace OMG
 {
-    public interface ILevelLoader
+    public interface ILevelInfoContainer
     {
         LevelConfigScriptableObject CurrentLevel { get; }
         UniTask LoadNextLevel();
         UniTask RestartLevel();
     }
 
-    public class LevelLoader : ILevelLoader
+    public class LevelLoader : ILevelInfoContainer
     {
         private const string LevelsPassedSaveKey = "-levels-passed-";
-        private const string LevelSceneName = "Level";
 
         private readonly ISaveService _saveService;
         private readonly LevelContainerScriptableObject _levelContainerScriptableObject;
+        private readonly GameFieldInstanceProvider _gameFieldInstanceProvider;
 
-        private bool _isLevelSceneLoaded;
         private int _passedLevels = 0;
+
         public LevelConfigScriptableObject CurrentLevel { get; private set; }
 
-        public LevelLoader(ISaveService saveService, LevelContainerScriptableObject levelContainerScriptableObject)
+        public LevelLoader(ISaveService saveService,
+            LevelContainerScriptableObject levelContainerScriptableObject,
+            GameFieldInstanceProvider gameFieldInstanceProvider)
         {
             _saveService = saveService;
             _levelContainerScriptableObject = levelContainerScriptableObject;
+            _gameFieldInstanceProvider = gameFieldInstanceProvider;
 
             _passedLevels = _saveService.Get<int>(LevelsPassedSaveKey, 0);
             IReadOnlyList<LevelConfigScriptableObject> levels = GetCurrentLevels(_levelContainerScriptableObject);
@@ -47,17 +48,8 @@ namespace OMG
 
         private async UniTask StartLevelInternal(LevelConfigScriptableObject level)
         {
-            if (_isLevelSceneLoaded)
-            {
-                await SceneManager.UnloadSceneAsync(LevelSceneName);
-                await UniTask.DelayFrame(1);
-            }
-
             CurrentLevel = level;
-
-            await SceneManager.LoadSceneAsync(LevelSceneName, LoadSceneMode.Additive);
-            _isLevelSceneLoaded = true;
-            await UniTask.DelayFrame(1);
+            _gameFieldInstanceProvider.Instance.ResetField();
         }
 
         public async UniTask RestartLevel()

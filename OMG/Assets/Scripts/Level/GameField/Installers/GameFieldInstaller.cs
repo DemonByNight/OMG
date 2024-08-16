@@ -9,12 +9,11 @@ namespace OMG
         [SerializeField] private GameUIArea gameUIArea;
 
         [Inject] private LevelConfigScriptableObject _levelConfigScriptableObject;
-        [Inject] private ILevelParser _levelParser;
 
         public override void InstallBindings()
         {
             Container.BindInstance(gameField).AsSingle().NonLazy();            
-            Container.BindInterfacesTo<GameFieldStateManager>().AsSingle().WithArguments(_levelConfigScriptableObject);
+            Container.BindInterfacesTo<GameFieldStateManager>().AsSingle();
             Container.BindInterfacesTo<GameUIArea>().FromInstance(gameUIArea).AsSingle();
             Container.BindInterfacesTo<GameFieldCommandHandler>().AsSingle();
             Container.Bind<LevelConfigScriptableObject>().FromInstance(_levelConfigScriptableObject);

@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Zenject;
@@ -12,7 +13,13 @@ namespace OMG
         {
             Random.InitState(System.DateTime.Now.Millisecond);
             bootstrapSceneContext.Run();
-            bootstrapSceneContext.Container.Resolve<ILevelLoader>().RestartLevel();
+
+            StartLevel().Forget();
+        }
+
+        private async UniTask StartLevel()
+        {
+            await SceneManager.LoadSceneAsync("Level", LoadSceneMode.Additive);
         }
     }
 }

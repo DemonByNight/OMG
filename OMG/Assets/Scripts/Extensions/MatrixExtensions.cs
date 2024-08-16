@@ -136,15 +136,19 @@ namespace OMG
                     pair.Item1 = currentIndex;
                     pair.Item2 = -1;
 
-                    for (int k = currentIndex - columns; k >= 0 && matrix[k] == -1; k -= columns)
+                    for (int k = currentIndex - columns; k >= 0; k -= columns)
                     {
+                        if (localExceptIndex.Contains(k))
+                            break;
+
                         if (flyingPairs.ContainsKey(k))
                         {
                             pair.Item2 = flyingPairs[k] + columns;
                             break;
                         }
 
-                        pair.Item2 = k;
+                        if (matrix[k] == -1)
+                            pair.Item2 = k;
                     }
 
                     if (pair.Item2 == -1)

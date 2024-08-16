@@ -1,21 +1,21 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Zenject;
 
 namespace OMG
 {
-    public interface IGameUIArea
+    public interface IGameUIArea : IGameFieldComponent
     {
         int GetBlockIndexByViewport(Vector2 viewport);
 
-        UniTask Move(int indexStart, int indexEnd);
-        UniTask Destroy(HashSet<int> indexesToDestroy);
+        UniTask Move(int indexStart, int indexEnd, CancellationToken token);
+        UniTask Destroy(HashSet<int> indexesToDestroy, CancellationToken token);
     }
 
-    public class GameUIArea : MonoBehaviour, IGameUIArea, IInitializable
+    public class GameUIArea : MonoBehaviour, IGameUIArea
     {
         [SerializeField] private Camera renderCamera;
         [SerializeField] private GameFieldIndexContainer gameFieldIndexContainerPrefab;
@@ -27,6 +27,8 @@ namespace OMG
         private Dictionary<int, GameFieldIndexContainer> _indexContainers = new();
         private Dictionary<int, UIBlockBehaviour> _cells = new();
 
+        public bool Initialized { get; private set; }
+
         [Inject]
         private void Construct(LevelConfigScriptableObject levelConfigScriptableObject, IGameFieldStateManager gameFieldStateManager)
         {
@@ -34,7 +36,7 @@ namespace OMG
             _gameFieldStateManager = gameFieldStateManager;
         }
 
-        public void Initialize()
+        public void InitializeComponent()
         {
             _levelParseInfo = _gameFieldStateManager.GetFieldInfo();
 
@@ -105,7 +107,7 @@ namespace OMG
             return result;
         }
 
-        public async UniTask Move(int indexStart, int indexEnd)
+        public async UniTask Move(int indexStart, int indexEnd, CancellationToken token)
         {
             UniTask move1 = new(), move2 = new();
 
@@ -116,17 +118,15 @@ namespace OMG
             && _indexContainers.TryGetValue(indexEnd, out var container1))
             {
                 cell1.SetOrder(indexEnd);
-                move1 = cell1.transform.DOMove(container1.transform.position, 2f).ToUniTask();
+                move1 = cell1.transform.DOMove(container1.transform.position, 0.5f).SetEase(Ease.Linear).ToUniTask(cancellationToken: token);
             }
 
             if (cell2Exist
                  && _indexContainers.TryGetValue(indexStart, out var container2))
             {
                 cell2.SetOrder(indexStart);
-                move2 = cell2.transform.DOMove(container2.transform.position, 2f).ToUniTask();
+                move2 = cell2.transform.DOMove(container2.transform.position, 0.5f).SetEase(Ease.Linear).ToUniTask(cancellationToken: token);
             }
-
-            await UniTask.WhenAll(move1, move2);
 
             var buf = _cells[indexStart];
 
@@ -137,9 +137,14 @@ namespace OMG
 
             if (cell1Exist)
                 _cells[indexEnd] = buf;
+
+            if (token.IsCancellationRequested)
+                return;
+
+            await UniTask.WhenAll(move1, move2);
         }
 
-        public async UniTask Destroy(HashSet<int> indexesToDestroy)
+        public async UniTask Destroy(HashSet<int> indexesToDestroy, CancellationToken token)
         {
             List<UIBlockBehaviour> waitDestroy = new();
 
@@ -151,11 +156,24 @@ namespace OMG
                 }
             }
 
-            await UniTask.WhenAll(waitDestroy.Select(g => g.PlayDestroyEffectAsync()));
+            await UniTask.WhenAll(waitDestroy.Select(g => g.PlayDestroyEffectAsync(token)));
             waitDestroy.ForEach(g => Destroy(g.gameObject));
 
             foreach (var index in indexesToDestroy)
                 _cells.Remove(index);
+        }
+
+        public void Clear()
+        {
+            foreach (var item in _indexContainers)
+                Destroy(item.Value.gameObject);
+            _indexContainers.Clear();
+
+            foreach (var item in _cells)
+                Destroy(item.Value.gameObject);
+            _cells.Clear();
+
+            Initialized = false;
         }
     }
 }

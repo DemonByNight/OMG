@@ -119,7 +119,10 @@ namespace OMG
         {
             void FindBlocksInArea(IList<int> matrix, int rows, int columns, int blockIndex, ISet<int> areaBlocks, ISet<int> newAreaBlocks, ICollection<int> exceptIndex = null)
             {
-                List<int> adjacentIndexes = new() { blockIndex - 1, blockIndex + 1, blockIndex - columns, blockIndex + columns };
+                List<int> adjacentIndexes = new() { blockIndex - 1, blockIndex + 1 };
+                adjacentIndexes.RemoveAll(g => g / columns != blockIndex / columns);
+                adjacentIndexes.Add(blockIndex - columns);
+                adjacentIndexes.Add(blockIndex + columns);
                 adjacentIndexes.RemoveAll(g => g < 0 || g >= matrix.Count);
                 adjacentIndexes.RemoveAll(g => areaBlocks.Contains(g) || exceptIndex.Contains(g));
                 int refValue = matrix[blockIndex];

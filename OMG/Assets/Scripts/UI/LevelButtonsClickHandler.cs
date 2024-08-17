@@ -13,15 +13,13 @@ namespace OMG
         [SerializeField] private TMP_Text text;
 
         private ILevelInfoContainer _levelLoader;
-        private GameFieldInstanceProvider _gameFieldInstanceProvider;
 
         private CompositeDisposable _disposables = new();
 
         [Inject]
-        private void Construct(ILevelInfoContainer levelLoader, GameFieldInstanceProvider gameFieldInstanceProvider)
+        private void Construct(ILevelInfoContainer levelLoader)
         {
             _levelLoader = levelLoader;
-            _gameFieldInstanceProvider = gameFieldInstanceProvider;
 
             Subscribe();
         }

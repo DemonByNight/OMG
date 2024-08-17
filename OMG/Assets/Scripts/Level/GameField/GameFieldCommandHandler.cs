@@ -14,17 +14,17 @@ namespace OMG
         UniTask Move(Vector2 viewportStart, Vector2 viewportEnd);
     }
 
+    public enum Direction
+    {
+        None = 0,
+        Up = 1,
+        Right = 2,
+        Down = 3,
+        Left = 4
+    }
+
     public class GameFieldCommandHandler : IGameFieldCommandHandler, IDisposable
     {
-        private enum Direction
-        {
-            None = 0,
-            Top = 1,
-            Right = 2,
-            Bottom = 3,
-            Left = 4
-        }
-
         private readonly IGameUIArea _gameUIArea;
         private readonly IGameFieldStateManager _gameFieldStateManager;
 
@@ -81,8 +81,10 @@ namespace OMG
             if (!Initialized)
                 return;
 
+            Direction dir = CalculateDirection(viewportStart, viewportEnd);
+
             int indexStart = _gameUIArea.GetBlockIndexByViewport(viewportStart);
-            int indexEnd = _gameUIArea.GetBlockIndexByViewport(viewportEnd);
+            int indexEnd = _gameUIArea.GetBlockIndexByViewport(viewportStart, dir);
 
             if (indexStart == -1 || indexEnd == -1)
                 return;
@@ -99,12 +101,10 @@ namespace OMG
             if (fieldInfo.Blocks[indexStart] == -1)
                 return;
 
-            Direction dir = CalculateDirection(fieldInfo, indexStart, indexEnd);
-
             if (dir == Direction.None)
                 return;
 
-            if (dir == Direction.Top && fieldInfo.Blocks[indexEnd] == -1)
+            if (dir == Direction.Up && fieldInfo.Blocks[indexEnd] == -1)
                 return;
 
             _uiBlockedIndexes.Add(indexStart);
@@ -121,18 +121,33 @@ namespace OMG
             _uiBlockedIndexes.Remove(indexEnd);
         }
 
-        private Direction CalculateDirection(FieldParseInfo fpi, int p1, int p2)
+        private Direction CalculateDirection(Vector2 p1, Vector2 p2)
         {
             Direction result = Direction.None;
 
-            if (p2 == p1 + 1)
-                result = Direction.Right;
-            else if (p2 == p1 - 1)
-                result = Direction.Left;
-            else if (p2 == p1 + fpi.Columns)
-                result = Direction.Top;
-            else if (p2 == p1 - fpi.Columns)
-                result = Direction.Bottom;
+            Vector3 dragVector = p2 - p1;
+
+            float positiveX = Mathf.Abs(dragVector.x);
+            float positiveY = Mathf.Abs(dragVector.y);
+            if (positiveX > positiveY)
+            {
+                result = (dragVector.x > 0) ? Direction.Right : Direction.Left;
+            }
+            else
+            {
+                result = (dragVector.y > 0) ? Direction.Up : Direction.Down;
+            }
+
+            return result;
+
+            //if (p1.x)
+            //    result = Direction.Right;
+            //else if (p2 == p1 - 1)
+            //    result = Direction.Left;
+            //else if (p2 == p1 + fpi.Columns)
+            //    result = Direction.Top;
+            //else if (p2 == p1 - fpi.Columns)
+            //    result = Direction.Bottom;
 
             return result;
         }

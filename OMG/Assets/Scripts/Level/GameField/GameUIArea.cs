@@ -15,6 +15,7 @@ namespace OMG
     public interface IGameUIArea : IGameFieldComponent, IGameFieldUIStateProvider
     {
         int GetBlockIndexByViewport(Vector2 viewport);
+        int GetBlockIndexByViewport(Vector2 viewport, Direction direction);
 
         UniTask Move(int indexStart, int indexEnd, CancellationToken token);
         UniTask Destroy(HashSet<int> indexesToDestroy, CancellationToken token);
@@ -89,10 +90,10 @@ namespace OMG
                         UIBlockBehaviour prefab = GetUIBlock(_levelParseInfo.Blocks, i.GetRowIndex(_levelParseInfo.Columns) + j, availableBlocks);
                         UIBlockBehaviour uiBlock = Instantiate(prefab, spawnPoint, Quaternion.identity, transform);
                         uiBlock.transform.localScale = blockScale;
-                    
+
                         uiBlock.Index = i.GetRowIndex(_levelParseInfo.Columns) + j;
                         uiBlock.SetOrder(i.GetRowIndex(_levelParseInfo.Columns) + j);
-                    
+
                         _cells.Add(i.GetRowIndex(_levelParseInfo.Columns) + j, uiBlock);
                     }
                 }
@@ -113,6 +114,52 @@ namespace OMG
             }
 
             return result;
+        }
+
+        public int GetBlockIndexByViewport(Vector2 viewport, Direction direction)
+        {
+            int result = -1;
+
+            var index = GetBlockIndexByViewport(viewport);
+            if (index == -1)
+                return result;
+
+            switch (direction)
+            {
+                case Direction.Up:
+                    {
+                        result = index + _levelParseInfo.Columns;
+                        if (result >= _levelParseInfo.Blocks.Count)
+                            result = -1;
+
+                        return result;
+                    }
+                case Direction.Right:
+                    {
+                        result = index + 1;
+                        if (result / _levelParseInfo.Columns != index / _levelParseInfo.Columns)
+                            result = -1;
+
+                        return result;
+                    }
+                case Direction.Down:
+                    {
+                        result = index - _levelParseInfo.Columns;
+                        if (result < 0)
+                            result = -1;
+
+                        return result;
+                    }
+                case Direction.Left:
+                    {
+                        result = index - 1;
+                        if (result / _levelParseInfo.Columns != index / _levelParseInfo.Columns)
+                            result = -1;
+
+                        return result;
+                    }
+                default: return -1;
+            }
         }
 
         public async UniTask Move(int indexStart, int indexEnd, CancellationToken token)
@@ -161,9 +208,9 @@ namespace OMG
         {
             List<UIBlockBehaviour> waitDestroy = new();
 
-            foreach (var index in indexesToDestroy) 
+            foreach (var index in indexesToDestroy)
             {
-                if(_cells.TryGetValue(index, out UIBlockBehaviour cell))
+                if (_cells.TryGetValue(index, out UIBlockBehaviour cell))
                 {
                     waitDestroy.Add(cell);
                 }

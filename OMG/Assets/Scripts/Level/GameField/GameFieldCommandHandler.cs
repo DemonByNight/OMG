@@ -56,7 +56,13 @@ namespace OMG
                 int processedCount = 0;
                 do
                 {
-                    processedCount = await NormalizeGameField();
+                    try
+                    {
+                        processedCount = await NormalizeGameField();
+                    }
+                    catch
+                    {
+                    }
                 } while (processedCount > 0);
 
                 IsNormalizationInProcess = false;
@@ -137,17 +143,6 @@ namespace OMG
             {
                 result = (dragVector.y > 0) ? Direction.Up : Direction.Down;
             }
-
-            return result;
-
-            //if (p1.x)
-            //    result = Direction.Right;
-            //else if (p2 == p1 - 1)
-            //    result = Direction.Left;
-            //else if (p2 == p1 + fpi.Columns)
-            //    result = Direction.Top;
-            //else if (p2 == p1 - fpi.Columns)
-            //    result = Direction.Bottom;
 
             return result;
         }

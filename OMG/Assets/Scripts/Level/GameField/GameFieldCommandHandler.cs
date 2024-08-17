@@ -45,29 +45,16 @@ namespace OMG
         {
             _cts = new();
 
-            //start game normalize
-            int processedCount = 0;
-            do
-            {
-                processedCount = await NormalizeGameField();
-            } while (processedCount > 0);
-
             Observable.EveryUpdate().Subscribe(async _ =>
             {
                 if (_isNormalizationInProcess)
                     return;
 
-                var fieldInfo = _gameFieldStateManager.GetFieldInfo();
-
-                if (_normalizationBlockedIndexes.Count > 0
-                    || fieldInfo.Blocks.HasAnyFlyingIndex(fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes))
+                int processedCount = 0;
+                do
                 {
-                    int processedCount = 0;
-                    do
-                    {
-                        processedCount = await NormalizeGameField();
-                    } while (processedCount > 0);
-                }
+                    processedCount = await NormalizeGameField();
+                } while (processedCount > 0);
             }).AddTo(_disposables);
 
             Initialized = true;
@@ -166,10 +153,12 @@ namespace OMG
             }
 
             //adjacent
-            var adjacentIndexesHorizontal = fieldInfo.Blocks.GetAdjacentIndexesHorizontal(3, fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
-            var adjacentIndexesVertical = fieldInfo.Blocks.GetAdjacentIndexesVertical(3, fieldInfo.Rows, fieldInfo.Columns, _uiBlockedIndexes);
+            var exceptCollection = localBlockedIndexes.Concat(_uiBlockedIndexes).ToList();
+            var adjacentIndexesHorizontal = fieldInfo.Blocks.GetAdjacentIndexesHorizontal(3, fieldInfo.Rows, fieldInfo.Columns, exceptCollection);
+            var adjacentIndexesVertical = fieldInfo.Blocks.GetAdjacentIndexesVertical(3, fieldInfo.Rows, fieldInfo.Columns, exceptCollection);
 
             adjacentIndexesHorizontal.UnionWith(adjacentIndexesVertical);
+            adjacentIndexesHorizontal.UnionWith(fieldInfo.Blocks.GetAreaBlocks(fieldInfo.Rows, fieldInfo.Columns, adjacentIndexesHorizontal, exceptCollection));
             localBlockedIndexes.AddRange(adjacentIndexesHorizontal);
             _normalizationBlockedIndexes.AddRange(adjacentIndexesHorizontal);
 
@@ -197,7 +186,7 @@ namespace OMG
 
         public void Clear()
         {
-            _cts.Cancel();
+            _cts?.Cancel();
             _uiBlockedIndexes.Clear();
             _normalizationBlockedIndexes.Clear();
             _disposables?.Clear();

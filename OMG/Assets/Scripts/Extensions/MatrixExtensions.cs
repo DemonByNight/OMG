@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OMG
 {
@@ -66,7 +67,7 @@ namespace OMG
             {
                 for (int i = from; i <= to; i += columns)
                 {
-                    if (resultSet.Contains(i)) 
+                    if (resultSet.Contains(i))
                         continue;
 
                     resultSet.Add(i);
@@ -114,6 +115,37 @@ namespace OMG
             return adjacentIndexes;
         }
 
+        public static ISet<int> GetAreaBlocks(this IList<int> matrix, int rows, int columns, ISet<int> areaBlocks, ICollection<int> exceptIndex = null)
+        {
+            void FindBlocksInArea(IList<int> matrix, int rows, int columns, int blockIndex, ISet<int> areaBlocks, ISet<int> newAreaBlocks, ICollection<int> exceptIndex = null)
+            {
+                List<int> adjacentIndexes = new() { blockIndex - 1, blockIndex + 1, blockIndex - columns, blockIndex + columns };
+                adjacentIndexes.RemoveAll(g => g < 0 || g >= matrix.Count);
+                adjacentIndexes.RemoveAll(g => areaBlocks.Contains(g) || exceptIndex.Contains(g));
+                int refValue = matrix[blockIndex];
+
+                foreach (var index in adjacentIndexes)
+                {
+                    if (matrix[index] != refValue
+                        || exceptIndex.Contains(index))
+                        continue;
+
+                    newAreaBlocks.Add(index);
+                    FindBlocksInArea(matrix, rows, columns, index, areaBlocks, newAreaBlocks, exceptIndex);
+                }
+            }
+
+            ICollection<int> localExceptIndex = exceptIndex ?? new List<int>();
+            HashSet<int> result = new();
+
+            foreach (var block in areaBlocks)
+            {
+                FindBlocksInArea(matrix, rows, columns, block, areaBlocks, result, exceptIndex);
+            }
+
+            return result;
+        }
+
         public static Dictionary<int, int> GetFlyingPairs(this IList<int> matrix, int rows, int columns, ICollection<int> exceptIndex = null)
         {
             ICollection<int> localExceptIndex = exceptIndex ?? new List<int>();
@@ -132,7 +164,7 @@ namespace OMG
                         continue;
 
                     (int, int) pair = (-1, -1);
-                    
+
                     pair.Item1 = currentIndex;
                     pair.Item2 = -1;
 

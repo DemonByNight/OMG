@@ -19,6 +19,7 @@ namespace OMG
 
         private async UniTask StartLevel()
         {
+            Application.targetFrameRate = 60;
             await SceneManager.LoadSceneAsync("Level", LoadSceneMode.Additive);
         }
     }

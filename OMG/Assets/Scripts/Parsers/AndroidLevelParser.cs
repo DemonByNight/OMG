@@ -5,13 +5,17 @@ using System.Text.RegularExpressions;
 
 namespace OMG
 {
-    public class TxtLevelParser : ILevelParser
+    public class AndroidLevelParser : ILevelParser
     {
         public FieldParseInfo Parse(LevelConfigScriptableObject levelConfig)
         {
             FieldParseInfo result = new();
+            List<string> rows = new();
 
-            var rows = levelConfig.LevelAsset.text.Split(Environment.NewLine);
+            string copyText = levelConfig.LevelAsset.text;
+            copyText = copyText.Replace("\r\n", "\n");
+            rows = copyText.Split(Environment.NewLine).ToList();
+
             List<string> valueCharacters = new();
 
             foreach (var row in rows)
@@ -34,7 +38,7 @@ namespace OMG
                 result.Blocks.Add(candidate);
             }
 
-            result.Rows = rows.Length;
+            result.Rows = rows.Count;
             result.Columns = result.Blocks.Count / result.Rows;
             result.Blocks = result.Blocks.Split(result.Columns).Reverse().SelectMany(g => g).ToList();
 

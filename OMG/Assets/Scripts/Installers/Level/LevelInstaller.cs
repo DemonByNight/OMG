@@ -9,7 +9,11 @@ namespace OMG
 
         public override void InstallBindings()
         {
-            Container.Bind<ILevelParser>().To<TxtLevelParser>().AsSingle();
+#if UNITY_EDITOR || UNITY_STANDALONE_WIN
+            Container.Bind<ILevelParser>().To<WindowsLevelParser>().AsSingle();
+#elif UNITY_ANDROID
+            Container.Bind<ILevelParser>().To<AndroidLevelParser>().AsSingle();
+#endif
             Container.Bind<GameFieldInstanceProvider>().AsSingle();
             Container.BindInterfacesTo<LevelWinLoseDecider>().AsSingle();
             Container.BindFactory<GameField, GameField.Factory>().FromSubContainerResolve()

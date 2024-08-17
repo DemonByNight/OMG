@@ -89,10 +89,10 @@ namespace OMG
                         UIBlockBehaviour prefab = GetUIBlock(_levelParseInfo.Blocks, i.GetRowIndex(_levelParseInfo.Columns) + j, availableBlocks);
                         UIBlockBehaviour uiBlock = Instantiate(prefab, spawnPoint, Quaternion.identity, transform);
                         uiBlock.transform.localScale = blockScale;
-
+                    
                         uiBlock.Index = i.GetRowIndex(_levelParseInfo.Columns) + j;
                         uiBlock.SetOrder(i.GetRowIndex(_levelParseInfo.Columns) + j);
-
+                    
                         _cells.Add(i.GetRowIndex(_levelParseInfo.Columns) + j, uiBlock);
                     }
                 }

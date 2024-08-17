@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
 using UniRx;
+using TMPro;
 
 namespace OMG
 {
@@ -9,6 +10,7 @@ namespace OMG
     {
         [SerializeField] private Button restartButton;
         [SerializeField] private Button nextLevelButton;
+        [SerializeField] private TMP_Text text;
 
         private ILevelInfoContainer _levelLoader;
         private GameFieldInstanceProvider _gameFieldInstanceProvider;
@@ -22,6 +24,11 @@ namespace OMG
             _gameFieldInstanceProvider = gameFieldInstanceProvider;
 
             Subscribe();
+        }
+
+        private void Update()
+        {
+            text.text = (1.0f / Time.deltaTime).ToString();
         }
 
         private void Subscribe()

@@ -5,8 +5,8 @@ namespace OMG
 {
     public interface ILevelInfoContainer
     {
-        LevelConfigScriptableObject CurrentLevel { get; }
         UniTask LoadNextLevel();
+        UniTask RestoreLevel();
         UniTask RestartLevel();
     }
 
@@ -19,8 +19,7 @@ namespace OMG
         private readonly GameFieldInstanceProvider _gameFieldInstanceProvider;
 
         private int _passedLevels = 0;
-
-        public LevelConfigScriptableObject CurrentLevel { get; private set; }
+        private LevelConfigScriptableObject _currentLevel;
 
         public LevelLoader(ISaveService saveService,
             LevelContainerScriptableObject levelContainerScriptableObject,
@@ -32,7 +31,12 @@ namespace OMG
 
             _passedLevels = _saveService.GetInt(LevelsPassedSaveKey, 0);
             IReadOnlyList<LevelConfigScriptableObject> levels = GetCurrentLevels(_levelContainerScriptableObject);
-            CurrentLevel = levels[_passedLevels % levels.Count];
+            _currentLevel = levels[_passedLevels % levels.Count];
+        }
+
+        public async UniTask RestoreLevel()
+        {
+            await _gameFieldInstanceProvider.Instance.RestoreField(_currentLevel);
         }
 
         public async UniTask LoadNextLevel()
@@ -43,18 +47,13 @@ namespace OMG
             IReadOnlyList<LevelConfigScriptableObject> levels = GetCurrentLevels(_levelContainerScriptableObject);
             var nextLevel = levels[_passedLevels % levels.Count];
 
-            await StartLevelInternal(nextLevel);
-        }
-
-        private async UniTask StartLevelInternal(LevelConfigScriptableObject level)
-        {
-            CurrentLevel = level;
-            _gameFieldInstanceProvider.Instance.ResetField();
+            _currentLevel = nextLevel;
+            await _gameFieldInstanceProvider.Instance.LoadNextField(_currentLevel);
         }
 
         public async UniTask RestartLevel()
         {
-            await StartLevelInternal(CurrentLevel);
+            await _gameFieldInstanceProvider.Instance.ResetField();
         }
 
         private IReadOnlyList<LevelConfigScriptableObject> GetCurrentLevels(LevelContainerScriptableObject levelConfigs)

@@ -5,8 +5,11 @@ namespace OMG
 {
     public interface IGameFieldStateManager : IGameFieldComponent
     {
+        void RestoreField(LevelConfigScriptableObject levelConfigs);
+        void LoadNextField(LevelConfigScriptableObject levelConfigs);
         void ResetField();
         FieldParseInfo GetFieldInfo();
+        LevelConfigScriptableObject CurrentLevelConfig { get; }
         void Set(params (int,int)[] savePairs);
     }
 
@@ -38,6 +41,7 @@ namespace OMG
 
         private FieldParseInfo _fieldParseInfo;
 
+        public LevelConfigScriptableObject CurrentLevelConfig { get; private set; }
         public bool Initialized { get; private set; }
 
         public GameFieldStateManager(ILevelParser levelParser,
@@ -51,9 +55,16 @@ namespace OMG
 
         public async UniTask InitializeComponent()
         {
+            Initialized = true;
+        }
+
+        public void RestoreField(LevelConfigScriptableObject levelConfig)
+        {
+            CurrentLevelConfig = levelConfig;
+
             var checkSave = _saveService.Get<FieldSaveData>(SaveKey, new());
             if (string.IsNullOrEmpty(checkSave.LevelKey) ||
-                !checkSave.LevelKey.Equals(_levelLoader.CurrentLevel.Name))
+                !checkSave.LevelKey.Equals(CurrentLevelConfig.Name))
             {
                 ResetField();
             }
@@ -61,13 +72,17 @@ namespace OMG
             {
                 _fieldParseInfo = checkSave.GameAreaState;
             }
+        }
 
-            Initialized = true;
+        public void LoadNextField(LevelConfigScriptableObject levelConfig)
+        {
+            CurrentLevelConfig = levelConfig;
+            ResetField();
         }
 
         public void ResetField()
         {
-            _fieldParseInfo = _levelParser.Parse(_levelLoader.CurrentLevel);
+            _fieldParseInfo = _levelParser.Parse(CurrentLevelConfig);
             Save(_fieldParseInfo);
         }
 
@@ -76,7 +91,7 @@ namespace OMG
 
         private void Save(FieldParseInfo info)
         {
-            _saveService.Save(SaveKey, new FieldSaveData(_levelLoader.CurrentLevel.Name, info));
+            _saveService.Save(SaveKey, new FieldSaveData(CurrentLevelConfig.Name, info));
         }
         
         //(index, value)

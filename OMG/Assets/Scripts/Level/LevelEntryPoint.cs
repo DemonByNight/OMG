@@ -15,8 +15,8 @@ namespace OMG
             var levelLoader = sceneContext.Container.Resolve<ILevelInfoContainer>();
             var gameFieldInstanceProvider = sceneContext.Container.Resolve<GameFieldInstanceProvider>();
 
-            gameFieldInstanceProvider.Instance = gameFieldFactory.Create(levelLoader.CurrentLevel);
-            levelLoader.RestartLevel();
+            gameFieldInstanceProvider.Instance = gameFieldFactory.Create();
+            levelLoader.RestoreLevel();
         }
     }
 }

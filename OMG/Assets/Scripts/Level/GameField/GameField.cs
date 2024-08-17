@@ -24,35 +24,51 @@ namespace OMG
         private IGameFieldStateManager _gameFieldStateManager;
         public IGameFieldCommandHandler GameFieldCommandHandler { get; private set; }
 
-        public class Factory : PlaceholderFactory<LevelConfigScriptableObject, GameField> { }
+        public class Factory : PlaceholderFactory<GameField> { }
 
         [Inject]
         private void Construct(IGameFieldCommandHandler gameFieldCommandHandler, IGameFieldStateManager gameFieldStateManager)
         {
             GameFieldCommandHandler = gameFieldCommandHandler;
             _gameFieldStateManager = gameFieldStateManager;
-
-            Initialize().Forget();
         }
 
-        public async UniTask Initialize()
+        public async UniTask RestoreField(LevelConfigScriptableObject levelConfig)
         {
+            ClearFieldState();
+
             await _gameFieldStateManager.InitializeComponent();
+            _gameFieldStateManager.RestoreField(levelConfig);
+            await gameUIArea.InitializeComponent();
+            await GameFieldCommandHandler.InitializeComponent();
+        }
+
+        public async UniTask LoadNextField(LevelConfigScriptableObject levelConfig)
+        {
+            ClearFieldState();
+
+            await _gameFieldStateManager.InitializeComponent();
+            _gameFieldStateManager.LoadNextField(levelConfig);
             await gameUIArea.InitializeComponent();
             await GameFieldCommandHandler.InitializeComponent();
         }
 
         public async UniTask ResetField()
         {
-            GameFieldCommandHandler.Clear();
-            gameUIArea.Clear();
-            _gameFieldStateManager.Clear();
+            ClearFieldState();
 
             _gameFieldStateManager.ResetField();
 
             await _gameFieldStateManager.InitializeComponent();
             await gameUIArea.InitializeComponent();
             await GameFieldCommandHandler.InitializeComponent();
+        }
+
+        private void ClearFieldState()
+        {
+            GameFieldCommandHandler.Clear();
+            gameUIArea.Clear();
+            _gameFieldStateManager.Clear();
         }
     }
 }

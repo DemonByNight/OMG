@@ -30,14 +30,14 @@ namespace OMG
         public bool Initialized { get; private set; }
 
         [Inject]
-        private void Construct(LevelConfigScriptableObject levelConfigScriptableObject, IGameFieldStateManager gameFieldStateManager)
+        private void Construct(IGameFieldStateManager gameFieldStateManager)
         {
-            _levelConfigScriptableObject = levelConfigScriptableObject;
             _gameFieldStateManager = gameFieldStateManager;
         }
 
         public async UniTask InitializeComponent()
         {
+            _levelConfigScriptableObject = _gameFieldStateManager.CurrentLevelConfig;
             _levelParseInfo = _gameFieldStateManager.GetFieldInfo();
 
             renderCamera.aspect = (float)renderCamera.targetTexture.width / renderCamera.targetTexture.height;

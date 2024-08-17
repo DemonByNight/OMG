@@ -11,6 +11,7 @@ namespace OMG
         {
             Container.Bind<ILevelParser>().To<TxtLevelParser>().AsSingle();
             Container.Bind<GameFieldInstanceProvider>().AsSingle();
+            Container.BindInterfacesTo<LevelWinLoseDecider>().AsSingle();
             Container.BindFactory<GameField, GameField.Factory>().FromSubContainerResolve()
                 .ByNewContextPrefab(gameFieldPrefab);
         }

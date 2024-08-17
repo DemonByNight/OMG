@@ -7,7 +7,12 @@ using Zenject;
 
 namespace OMG
 {
-    public interface IGameUIArea : IGameFieldComponent
+    public interface IGameFieldUIStateProvider
+    {
+        bool IsAnyAnimationInProgress { get; }
+    }
+
+    public interface IGameUIArea : IGameFieldComponent, IGameFieldUIStateProvider
     {
         int GetBlockIndexByViewport(Vector2 viewport);
 
@@ -29,6 +34,9 @@ namespace OMG
 
         public bool Initialized { get; private set; }
 
+        private int _animationsCount;
+        public bool IsAnyAnimationInProgress => _animationsCount > 0;
+
         [Inject]
         private void Construct(IGameFieldStateManager gameFieldStateManager)
         {
@@ -38,7 +46,7 @@ namespace OMG
         public async UniTask InitializeComponent()
         {
             _levelConfigScriptableObject = _gameFieldStateManager.CurrentLevelConfig;
-            _levelParseInfo = _gameFieldStateManager.GetFieldInfo();
+            _levelParseInfo = _gameFieldStateManager.GetFieldCurrentState();
 
             renderCamera.aspect = (float)renderCamera.targetTexture.width / renderCamera.targetTexture.height;
             renderCamera.orthographicSize = _levelParseInfo.Columns / renderCamera.aspect;
@@ -110,6 +118,7 @@ namespace OMG
         public async UniTask Move(int indexStart, int indexEnd, CancellationToken token)
         {
             UniTask move1 = new(), move2 = new();
+            int localAnimationsCounter = 0;
 
             bool cell1Exist = _cells.TryGetValue(indexStart, out var cell1);
             bool cell2Exist = _cells.TryGetValue(indexEnd, out var cell2);
@@ -118,6 +127,7 @@ namespace OMG
             && _indexContainers.TryGetValue(indexEnd, out var container1))
             {
                 cell1.SetOrder(indexEnd);
+                localAnimationsCounter++;
                 move1 = cell1.transform.DOMove(container1.transform.position, 0.5f).ToUniTask(cancellationToken: token);
             }
 
@@ -125,6 +135,7 @@ namespace OMG
                  && _indexContainers.TryGetValue(indexStart, out var container2))
             {
                 cell2.SetOrder(indexStart);
+                localAnimationsCounter++;
                 move2 = cell2.transform.DOMove(container2.transform.position, 0.5f).ToUniTask(cancellationToken: token);
             }
 
@@ -141,7 +152,9 @@ namespace OMG
             if (token.IsCancellationRequested)
                 return;
 
+            _animationsCount += localAnimationsCounter;
             await UniTask.WhenAll(move1, move2);
+            _animationsCount -= localAnimationsCounter;
         }
 
         public async UniTask Destroy(HashSet<int> indexesToDestroy, CancellationToken token)

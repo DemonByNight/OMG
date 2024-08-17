@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Zenject;
@@ -31,8 +28,7 @@ namespace OMG
         {
             restartButton.OnClickAsObservable().Subscribe(_ =>
             {
-                if (_gameFieldInstanceProvider is { Instance: not null })
-                    _gameFieldInstanceProvider.Instance.ResetField();
+                _levelLoader.RestartLevel();
             }).AddTo(_disposables);
 
             nextLevelButton.OnClickAsObservable().Subscribe(_ => 

@@ -7,6 +7,8 @@ namespace OMG
     public interface IGameField
     {
         IGameFieldCommandHandler GameFieldCommandHandler { get; }
+        IGameFieldStateProvider GameFieldStateProvider { get; }
+        IGameFieldUIStateProvider GameFieldUIStateProvider { get; }
     }
 
     public interface IGameFieldComponent
@@ -22,7 +24,10 @@ namespace OMG
         [SerializeField] private GameUIArea gameUIArea;
 
         private IGameFieldStateManager _gameFieldStateManager;
+
         public IGameFieldCommandHandler GameFieldCommandHandler { get; private set; }
+        public IGameFieldStateProvider GameFieldStateProvider { get; private set; }
+        public IGameFieldUIStateProvider GameFieldUIStateProvider => gameUIArea;
 
         public class Factory : PlaceholderFactory<GameField> { }
 
@@ -30,7 +35,7 @@ namespace OMG
         private void Construct(IGameFieldCommandHandler gameFieldCommandHandler, IGameFieldStateManager gameFieldStateManager)
         {
             GameFieldCommandHandler = gameFieldCommandHandler;
-            _gameFieldStateManager = gameFieldStateManager;
+            GameFieldStateProvider = _gameFieldStateManager = gameFieldStateManager;
         }
 
         public async UniTask RestoreField(LevelConfigScriptableObject levelConfig)

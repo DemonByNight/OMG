@@ -1,14 +1,20 @@
 using Cysharp.Threading.Tasks;
 using System;
+using UniRx;
 
 namespace OMG
 {
-    public interface IGameFieldStateManager : IGameFieldComponent
+    public interface IGameFieldStateProvider 
+    {
+        FieldParseInfo GetFieldCurrentState();
+        IObservable<Unit> StateChangedObservable { get; }
+    }
+
+    public interface IGameFieldStateManager : IGameFieldStateProvider, IGameFieldComponent
     {
         void RestoreField(LevelConfigScriptableObject levelConfigs);
         void LoadNextField(LevelConfigScriptableObject levelConfigs);
-        void ResetField();
-        FieldParseInfo GetFieldInfo();
+        void ResetField();        
         LevelConfigScriptableObject CurrentLevelConfig { get; }
         void Set(params (int,int)[] savePairs);
     }
@@ -35,21 +41,21 @@ namespace OMG
     {
         public const string SaveKey = "FieldSaveData";
 
-        private readonly ILevelInfoContainer _levelLoader;
         private readonly ISaveService _saveService;
         private readonly ILevelParser _levelParser;
 
         private FieldParseInfo _fieldParseInfo;
 
+        private Subject<Unit> _stateChangedObservable = new();
+        public IObservable<Unit> StateChangedObservable => _stateChangedObservable;
         public LevelConfigScriptableObject CurrentLevelConfig { get; private set; }
         public bool Initialized { get; private set; }
 
+
         public GameFieldStateManager(ILevelParser levelParser,
-            ILevelInfoContainer levelLoader,
             ISaveService saveService)
         {
             _levelParser = levelParser;
-            _levelLoader = levelLoader;
             _saveService = saveService;
         }
 
@@ -86,17 +92,21 @@ namespace OMG
             Save(_fieldParseInfo);
         }
 
-        public FieldParseInfo GetFieldInfo()
-            => _fieldParseInfo;
+        public FieldParseInfo GetFieldCurrentState()
+            => _fieldParseInfo.GetCopy();
 
         private void Save(FieldParseInfo info)
         {
             _saveService.Save(SaveKey, new FieldSaveData(CurrentLevelConfig.Name, info));
+            _stateChangedObservable.OnNext(Unit.Default);
         }
         
         //(index, value)
         public void Set(params (int, int)[] savePairs)
         {
+            if (savePairs.Length == 0)
+                return;
+
             var consistentCopy = _fieldParseInfo.GetCopy();
 
             foreach (var pair in savePairs)

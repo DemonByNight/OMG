@@ -10,6 +10,7 @@ namespace OMG
 {
     public interface IGameFieldCommandHandler : IGameFieldComponent
     {
+        bool IsNormalizationInProcess { get; }
         UniTask Move(Vector2 viewportStart, Vector2 viewportEnd);
     }
 
@@ -27,12 +28,12 @@ namespace OMG
         private readonly IGameUIArea _gameUIArea;
         private readonly IGameFieldStateManager _gameFieldStateManager;
 
-        private bool _isNormalizationInProcess = false;
         private CompositeDisposable _disposables = new();
         private HashSet<int> _uiBlockedIndexes = new();
         private HashSet<int> _normalizationBlockedIndexes = new();
         private CancellationTokenSource _cts;
 
+        public bool IsNormalizationInProcess { get; private set; }
         public bool Initialized { get; private set; }
 
         public GameFieldCommandHandler(IGameUIArea gameUIArea, IGameFieldStateManager gameFieldStateManager)
@@ -47,14 +48,18 @@ namespace OMG
 
             Observable.EveryUpdate().Subscribe(async _ =>
             {
-                if (_isNormalizationInProcess)
+                if (IsNormalizationInProcess)
                     return;
+
+                IsNormalizationInProcess = true;
 
                 int processedCount = 0;
                 do
                 {
                     processedCount = await NormalizeGameField();
                 } while (processedCount > 0);
+
+                IsNormalizationInProcess = false;
             }).AddTo(_disposables);
 
             Initialized = true;
@@ -62,7 +67,7 @@ namespace OMG
 
         private async UniTask Move(int indexStart, int indexEnd, CancellationToken token)
         {
-            var fieldInfo = _gameFieldStateManager.GetFieldInfo();
+            var fieldInfo = _gameFieldStateManager.GetFieldCurrentState();
 
             _gameFieldStateManager.Set(
                 (indexStart, fieldInfo[indexEnd]),
@@ -89,7 +94,7 @@ namespace OMG
                 || _normalizationBlockedIndexes.Contains(indexStart) || _normalizationBlockedIndexes.Contains(indexEnd))
                 return;
 
-            FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldInfo();
+            FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldCurrentState();
 
             if (fieldInfo.Blocks[indexStart] == -1)
                 return;
@@ -134,10 +139,8 @@ namespace OMG
 
         private async UniTask<int> NormalizeGameField()
         {
-            _isNormalizationInProcess = true;
-
             HashSet<int> localBlockedIndexes = new(_normalizationBlockedIndexes);
-            FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldInfo();
+            FieldParseInfo fieldInfo = _gameFieldStateManager.GetFieldCurrentState();
             List<UniTask> waitList = new();
 
             //fly
@@ -175,7 +178,6 @@ namespace OMG
             foreach (var index in localBlockedIndexes)
                 _normalizationBlockedIndexes.Remove(index);
 
-            _isNormalizationInProcess = false;
             return waitList.Count;
         }
 

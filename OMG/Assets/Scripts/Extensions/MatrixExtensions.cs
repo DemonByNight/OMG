@@ -117,8 +117,9 @@ namespace OMG
 
         public static ISet<int> GetAreaBlocks(this IList<int> matrix, int rows, int columns, ISet<int> areaBlocks, ICollection<int> exceptIndex = null)
         {
-            void FindBlocksInArea(IList<int> matrix, int rows, int columns, int blockIndex, ISet<int> areaBlocks, ISet<int> newAreaBlocks, ICollection<int> exceptIndex = null)
+            ISet<int> FindBlocksInArea(int blockIndex, ICollection<int> exceptIndex)
             {
+                HashSet<int> newAreaBlocks = new();
                 List<int> adjacentIndexes = new() { blockIndex - 1, blockIndex + 1 };
                 adjacentIndexes.RemoveAll(g => g / columns != blockIndex / columns);
                 adjacentIndexes.Add(blockIndex - columns);
@@ -134,16 +135,25 @@ namespace OMG
                         continue;
 
                     newAreaBlocks.Add(index);
-                    FindBlocksInArea(matrix, rows, columns, index, areaBlocks, newAreaBlocks, exceptIndex);
                 }
+
+                return newAreaBlocks;
             }
 
             ICollection<int> localExceptIndex = exceptIndex ?? new List<int>();
             HashSet<int> result = new();
+            Queue<int> processQueue = new(areaBlocks);
 
-            foreach (var block in areaBlocks)
+            while (processQueue.Count > 0)
             {
-                FindBlocksInArea(matrix, rows, columns, block, areaBlocks, result, exceptIndex);
+                var newBlocks = FindBlocksInArea(processQueue.Dequeue(), localExceptIndex);
+
+                foreach (var block in newBlocks)
+                {
+                    localExceptIndex.Add(block);
+                    result.Add(block);
+                    processQueue.Enqueue(block);
+                }
             }
 
             return result;
